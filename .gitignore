@@ -1,0 +1,8 @@
+*.spec
+*.log
+*copy.*
+*.reg
+dist/
+build/
+.venv/
+__pycache__/
