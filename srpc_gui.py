@@ -7,8 +7,8 @@ from tkinter import scrolledtext, messagebox, ttk
 import threading
 
 # .\.venv\Scripts\activate.ps1
-# pyinstaller -F -w --icon=your_icon.ico srpc_gui.py
-# pyinstaller -F --uac-admin -w srpc_gui.py
+# pyinstaller -F -w --icon=sursen.ico srpc_gui.py
+# pyinstaller -F --uac-admin -w srpc_gui.py --icon=sursen.ico
 class StdoutRedirector:
     def __init__(self, text_widget):
         self.text_widget = text_widget

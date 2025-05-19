@@ -4,7 +4,7 @@
 Sursen Reader打印色彩修复工具 CLI版本
 作者：Zhai @ 20250124
 版本：3.1
-# pyinstaller --uac-admin -F srpc_cli.py
+# pyinstaller --uac-admin -F srpc_cli.py --icon=sursen.ico
 """
 
 import winreg
