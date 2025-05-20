@@ -8,18 +8,16 @@ import ctypes
 '''
 使用python，编写一个安装程序，将本目录所有exe文件复制到%programfiles%下的sursen_enhancer_by_crazyan文件夹，然后运行修复程序srpc_cli.exe，将sursen_opener.exe设置为.gw格式文件的默认打开方式，支持windows7到win11的所有windows系统版本
 # .\.venv\Scripts\activate.ps1
-# pyinstaller --uac-admin -F sursen_enhancer_setup.py --icon=sursen.ico
+# pyinstaller --uac-admin -F sursen_enhancer_setup.py --icon=sursen.ico --name "Sursen Reader修复工具安装程序"
 
 '''
 def wait_for_any_key():
     """等待用户按下任意键继续（跨平台实现）"""
     if os.name == 'nt':
-        # Windows系统使用msvcrt
         import msvcrt
         print("\n按任意键继续...", end='', flush=True)
         msvcrt.getch()
     else:
-        # 类Unix系统（Linux/MacOS）使用termios
         import tty
         import termios
         print("\n按任意键继续...", end='', flush=True)
@@ -30,9 +28,9 @@ def wait_for_any_key():
             sys.stdin.read(1)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    print()  # 换行保持格式整洁
+    print()
+
 def get_program_files_dir():
-    # Prefer 64-bit Program Files on 64-bit Windows
     if 'PROGRAMFILES(X86)' in os.environ:
         return os.environ['PROGRAMFILES']
     return os.environ.get('PROGRAMFILES', r'C:\Program Files')
@@ -41,7 +39,11 @@ def copy_exe_files(src_dir, dest_dir):
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
     for exe_file in glob.glob(os.path.join(src_dir, '*.exe')):
-        shutil.copy2(exe_file, dest_dir)
+        try:
+            # 复制文件到目标目录
+            shutil.copy2(exe_file, dest_dir)
+        except Exception as e:
+            pass  # 处理文件复制异常
 
 def run_srpc_cli(dest_dir):
     srpc_path = os.path.join(dest_dir, 'srpc_cli.exe')
@@ -51,47 +53,59 @@ def run_srpc_cli(dest_dir):
 def set_gw_file_association(dest_dir):
     opener_path = os.path.join(dest_dir, 'sursen_opener.exe')
     if not os.path.exists(opener_path):
-        print("sursen_opener.exe not found, skipping file association.")
+        print("sursen_opener.exe 未找到，跳过文件关联设置。")
         return
 
-    # Set .gw file association in registry
     try:
-        # 1. Set .gw to sursen_gwfile
+        # 设置完整的文件类型信息
         with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, '.gw') as key:
             winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'sursen_gwfile')
+            winreg.SetValueEx(key, 'Content Type', 0, winreg.REG_SZ, 'application/sursen-gw')
 
-        # 2. Set sursen_gwfile shell open command
-        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r'sursen_gwfile\shell\open\command') as key:
-            winreg.SetValueEx(key, '', 0, winreg.REG_SZ, f'"{opener_path}" "%1"')
+        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, 'sursen_gwfile') as key:
+            winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'Sursen GW Document')
+            winreg.SetValueEx(key, 'FriendlyTypeName', 0, winreg.REG_SZ, 'Sursen GW Document')
+            winreg.SetValueEx(key, 'EditFlags', 0, winreg.REG_DWORD, 0x00010000)
 
-        # 3. Set icon (optional)
         with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r'sursen_gwfile\DefaultIcon') as key:
             winreg.SetValueEx(key, '', 0, winreg.REG_SZ, f'"{opener_path}",0')
 
-        # 4. Notify Windows of the change
-        ctypes.windll.shell32.SHChangeNotify(0x08000000, 0x0000, None, None)
-        print(".gw file association set successfully.")
+        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r'sursen_gwfile\shell\open\command') as key:
+            winreg.SetValueEx(key, '', 0, winreg.REG_SZ, f'"{opener_path}" "%1"')
+        print("成功设置 .gw 文件关联！")
     except Exception as e:
-        print(f"Failed to set file association: {e}")
+        print(f"设置文件关联失败: {str(e)}")
+    try:
+        # 设置用户可见的默认关联
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.gw\UserChoice') as key:
+            winreg.SetValueEx(key, 'Progid', 0, winreg.REG_SZ, 'sursen_gwfile')
+
+        # 刷新系统设置
+        ctypes.windll.shell32.SHChangeNotify(0x08000000, 0x0000, None, None)
+        print("成功设置 .gw 默认关联！")
+    #except PermissionError:
+    #    print("权限不足，请以管理员身份运行安装程序。")
+    except Exception as e:
+        print(f"设置默认关联失败: {str(e)}")
 
 def main():
     src_dir = os.path.dirname('./')
     dest_dir = os.path.join(get_program_files_dir(), 'sursen_enhancer_by_crazyan')
 
-    print(f"Copying exe files from {src_dir} to {dest_dir} ...")
+    print(f"正在复制文件从 {src_dir} 到 {dest_dir}...")
     copy_exe_files(src_dir, dest_dir)
 
-    print("Running srpc_cli.exe ...")
+    print("正在运行 srpc_cli.exe...")
     run_srpc_cli(dest_dir)
 
-    print("Setting .gw file association ...")
+    print("正在设置 .gw 文件关联...")
     set_gw_file_association(dest_dir)
 
-    print("Installation complete.")
+    print("安装完成！")
     wait_for_any_key()
 
 if __name__ == '__main__':
     if not sys.platform.startswith('win'):
-        print("This installer only supports Windows.")
+        print("本安装程序仅支持 Windows 操作系统。")
         sys.exit(1)
     main()

@@ -6,3 +6,5 @@ dist/
 build/
 .venv/
 __pycache__/
+*copy*.*
+backup/
