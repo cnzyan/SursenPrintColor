@@ -1,6 +1,6 @@
 # 读取注册表
 # .\.venv\Scripts\activate.ps1
-# pyinstaller -F srpc.py
+# pyinstaller -F srpc_basic.py
 import winreg
 import os
 import ctypes
@@ -90,7 +90,13 @@ if __name__ == "__main__":
                 lc=i
         folder=registry_value[:lc]
         cmd_path=folder+r"SursenReader.exe"
-        add_runas(cmd_path)
+        set_runas_admin = False
+        if set_runas_admin:
+            add_runas(cmd_path)
+            print(f"Added runas administrator done to {cmd_path}")
+        else:
+            print(f"Not added runas administrator done to {cmd_path}")
+
         # print(folder)
         try:
             content=''

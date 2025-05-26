@@ -55,22 +55,23 @@ def set_gw_file_association(dest_dir):
     if not os.path.exists(opener_path):
         print("sursen_opener.exe 未找到，跳过文件关联设置。")
         return
-
+    main_key="sursen_gwfile"
+    # main_key="SursenReader.gw"
     try:
         # 设置完整的文件类型信息
         with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, '.gw') as key:
-            winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'sursen_gwfile')
+            winreg.SetValueEx(key, '', 0, winreg.REG_SZ, main_key)
             winreg.SetValueEx(key, 'Content Type', 0, winreg.REG_SZ, 'application/sursen-gw')
 
-        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, 'sursen_gwfile') as key:
+        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, main_key) as key:
             winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'Sursen GW Document')
-            winreg.SetValueEx(key, 'FriendlyTypeName', 0, winreg.REG_SZ, 'Sursen GW Document')
+            winreg.SetValueEx(key, 'FriendlyTypeName', 0, winreg.REG_SZ, '书生 GW 文档')
             winreg.SetValueEx(key, 'EditFlags', 0, winreg.REG_DWORD, 0x00010000)
 
-        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r'sursen_gwfile\DefaultIcon') as key:
+        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, main_key+r'\DefaultIcon') as key:
             winreg.SetValueEx(key, '', 0, winreg.REG_SZ, f'"{opener_path}",0')
 
-        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r'sursen_gwfile\shell\open\command') as key:
+        with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, main_key+r'\shell\open\command') as key:
             winreg.SetValueEx(key, '', 0, winreg.REG_SZ, f'"{opener_path}" "%1"')
         print("成功设置 .gw 文件关联！")
     except Exception as e:
@@ -78,7 +79,7 @@ def set_gw_file_association(dest_dir):
     try:
         # 设置用户可见的默认关联
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.gw\UserChoice') as key:
-            winreg.SetValueEx(key, 'Progid', 0, winreg.REG_SZ, 'sursen_gwfile')
+            winreg.SetValueEx(key, 'Progid', 0, winreg.REG_SZ, 'SursenReader.gw')
 
         # 刷新系统设置
         ctypes.windll.shell32.SHChangeNotify(0x08000000, 0x0000, None, None)

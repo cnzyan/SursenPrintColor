@@ -95,7 +95,12 @@ class SursenFixerApp:
             if registry_value:
                 print(f"发现Sursen阅读器安装路径: {registry_value}")
                 exe_path = self.process_registry_value(registry_value)
-                self.add_runas(exe_path)
+                set_runas_admin = False
+                if set_runas_admin:
+                    self.add_runas(exe_path)
+                    print(f"已为 {exe_path} 添加管理员权限")
+                else:
+                    print(f"未为 {exe_path} 添加管理员权限")
                 self.fix_config_files(exe_path)
             
             self.fix_user_configs()

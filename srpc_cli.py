@@ -258,16 +258,22 @@ def main():
         install_path = RegistryOperator.get_install_path()
         if install_path:
             cli.print_colored(f"检测到安装路径: {install_path}", "GREEN")
-            
+            set_runas_admin = False
             # 设置管理员权限
-            success, msg = RegistryOperator.set_runas(install_path)
-            cli.print_colored(msg, "GREEN" if success else "RED")
+            if set_runas_admin:
+                # 设置管理员权限
+                success, msg = RegistryOperator.set_runas(install_path)
+                cli.print_colored(msg, "GREEN" if success else "RED")
+            else:
+                cli.print_colored("不设置管理员权限", "YELLOW")
+                
+            # 修复配置文件
+            ConfigFixer.fix_all_configs(install_path)
+            cli.print_colored("\n设置彩色打印操作完成！请重启Sursen Reader生效", "GREEN")
         else:
             cli.print_colored("未检测到Sursen安装", "YELLOW")
 
-        # 修复配置文件
-        ConfigFixer.fix_all_configs(install_path)
-        cli.print_colored("\n设置彩色打印操作完成！请重启Sursen Reader生效", "GREEN")
+
         wait_for_any_key()
         # 按任意键继续
 
